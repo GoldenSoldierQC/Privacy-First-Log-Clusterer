@@ -1,0 +1,21 @@
+{
+  "run_id": "2025-10-30T12:00:00Z-abcdef",
+  "sanitized": true,
+  "detections": [
+    {
+      "pii_type": "email",
+      "masked_value": "<EMAIL>",
+      "sample_context": "User login failed for john.doe@email.com"
+    },
+    {
+      "pii_type": "ipv4",
+      "masked_value": "<IP>",
+      "sample_context": "Connection from 203.0.113.42"
+    }
+  ],
+  "summary": {
+    "total_lines": 1000000,
+    "clusters": 10,
+    "total_pii_detections": 42
+  }
+}
