@@ -1,0 +1,31 @@
+name: "Log Clusterer"
+description: "Run the privacy-first log clusterer (SimHash) and produce an HTML report."
+inputs:
+input:
+description: 'Path to log file or directory (default: demo)'
+required: false
+default: 'demo'
+out:
+description: 'Output HTML file'
+required: false
+default: 'report.html'
+threshold:
+description: 'Hamming threshold (int)'
+required: false
+default: '6'
+sanitize:
+description: 'Mask PII in output (true/false)'
+required: false
+default: 'false'
+runs:
+using: 'docker'
+image: 'Dockerfile'
+args:
+- --input
+- ${{ inputs.input }}
+- --out
+- ${{ inputs.out }}
+- --threshold
+- ${{ inputs.threshold }}
+- --sanitize
+- ${{ inputs.sanitize }}
