@@ -53,3 +53,10 @@ python log_clusterer.py --input /var/log/app.log --watch --sanitize
 --sanitize          # Censors PII (emails, IPs, etc.) in all reports
 --export-registry   # Exports a 'registry.json' for auditing
 --threshold N       # Similarity threshold (default: 6). Lower to be stricter.
+
+
+This code is released under a "Source Available" model (similar to the Business Source License).
+
+✅ You are free to use, copy, and modify this tool for your own personal projects, internal company use, or for testing.
+
+❌ You cannot use this code to create a competing commercial product (e.g., you can't sell your own "Log Censor" service based on this code).
