@@ -87,7 +87,13 @@ def simhash(text: str, use_bigrams=True) -> int:
 
 
 def hamming(a: int, b: int) -> int:
-    return (a ^ b).bit_count()
+    x = a ^ b
+    try:
+        # Python 3.8+
+        return x.bit_count()
+    except AttributeError:
+        # Fallback for older Python versions
+        return bin(x).count("1")
 
 # ---------------- Simple PII detection / sanitization ----------------
 
