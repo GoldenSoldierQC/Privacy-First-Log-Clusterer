@@ -1,27 +1,5 @@
 #!/usr/bin/env python3
-"""
-log_clusterer.py
 
-Version améliorée: **Log Clusterer + Registry (privacy-first)**
-
-Ce fichier combine :
- - un clusterer de logs léger (SimHash 64 bits + Hamming)
- - un petit "registry" local permettant d'enregistrer des clusters comme des artefacts
-   (métadonnées, licences, consentement/PII flags) — utile en industrie pour traçabilité / conformité
- - export HTML (rapport) + export JSON (registry) pour intégration CI/CD
-
-Principaux ajouts par rapport à la v1 :
- - dataclasses LicenseInfo, ConsentRecord, Artifact
- - détection basique de PII (emails, IPs, numéros) et marquage d'artefact
- - export JSON registry via --export-registry
- - option --sanitize qui remplace les PII détectées dans les exemples (pour partage)
- - meilleure modularité et petites améliorations CLI
-
-Usage:
-   python log_clusterer.py --input app.log --out report.html --export-registry registry.json --sanitize
-   python log_clusterer.py --input demo
-
-Compatibilité: Python 3.8+
 """
 
 import argparse
