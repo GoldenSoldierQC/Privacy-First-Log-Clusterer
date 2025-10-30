@@ -27,11 +27,8 @@ No installation needed. Just Python 3.8+.
 
 
 
-# 1. Download (or clone) the script
-git clone https://github.com/[GoldenSoldierQC/log-censor.git
-cd log-censor
 
-# 2. Run the built-in demo (the best way to see it)
+# Run the built-in demo (the best way to see it)
 python log_clusterer.py --input demo --out demo_report.html --sanitize --export-registry registry.json
 
 # Basic scan of a file (uncensored report)
