@@ -52,3 +52,6 @@ test_registry.json
 *.json
 !registry.sample.json
 !report.yml
+
+# Benchmark and temporary files
+benchmark.py

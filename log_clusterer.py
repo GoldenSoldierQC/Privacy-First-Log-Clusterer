@@ -7,7 +7,7 @@ import os
 import re
 import time
 import time as _time
-from collections import defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -87,13 +87,9 @@ def simhash(text: str, use_bigrams=True) -> int:
     for token, w in freqs.items():
         h = stable_hash64(token)
         for i in range(SIMHASH_BITS):
-            bit = (h >> i) & 1
-            vec[i] += (1 if bit else -1) * w
-    fp = 0
-    for i in range(SIMHASH_BITS):
-        if vec[i] > 0:
-            fp |= 1 << i
-    return fp
+            vec[i] += w if (h >> i) & 1 else -w
+    # Use bit operations for faster fingerprint creation
+    return sum(1 << i for i in range(SIMHASH_BITS) if vec[i] > 0)
 
 
 def hamming(a: int, b: int) -> int:
@@ -143,34 +139,31 @@ def sanitize_text(text: str) -> str:
 class Cluster:
     def __init__(self, first_msg, first_ts, fp):
         self.count = 1
-        self.messages = [first_msg]
+        self.messages = deque(
+            [first_msg], maxlen=8
+        )  # Use deque with maxlen for efficiency
         self.first_ts = first_ts
         self.last_ts = first_ts
         self.fingerprints = [fp]
         self.bit_counts = [0] * SIMHASH_BITS
+        # Optimize bit counting initialization
         for i in range(SIMHASH_BITS):
-            if (fp >> i) & 1:
-                self.bit_counts[i] = 1
+            self.bit_counts[i] = (fp >> i) & 1
         self.centroid = fp
 
     def add(self, msg, ts, fp):
         self.count += 1
-        if len(self.messages) < 8:
-            self.messages.append(msg)
-        else:
-            self.messages.pop(0)
-            self.messages.append(msg)
+        self.messages.append(msg)  # deque automatically handles max size
         self.last_ts = ts
         self.fingerprints.append(fp)
+        # Update bit counts
         for i in range(SIMHASH_BITS):
-            if (fp >> i) & 1:
-                self.bit_counts[i] += 1
+            self.bit_counts[i] += (fp >> i) & 1
+        # Recalculate centroid
         half = self.count / 2.0
-        centroid = 0
-        for i in range(SIMHASH_BITS):
-            if self.bit_counts[i] > half:
-                centroid |= 1 << i
-        self.centroid = centroid
+        self.centroid = sum(
+            1 << i for i in range(SIMHASH_BITS) if self.bit_counts[i] > half
+        )
 
     def representative(self):
         return self.messages[-1] if self.messages else ""
@@ -192,6 +185,10 @@ def extract_timestamp(line: str):
         m = cre.search(line)
         if m:
             s = m.group("ts")
+            # Check for Unix timestamp first (faster)
+            if s.isdigit() and len(s) == 10:
+                return datetime.fromtimestamp(int(s))
+            # Try datetime formats in order of likelihood
             for fmt in (
                 "%Y-%m-%dT%H:%M:%S.%fZ",
                 "%Y-%m-%dT%H:%M:%SZ",
@@ -204,10 +201,8 @@ def extract_timestamp(line: str):
                     if fmt == "%H:%M:%S":
                         dt = datetime.combine(datetime.today().date(), dt.time())
                     return dt
-                except Exception:
-                    pass
-            if re.fullmatch(r"\d{10}", s):
-                return datetime.fromtimestamp(int(s))
+                except ValueError:
+                    continue
     return None
 
 
@@ -240,8 +235,8 @@ body{{font-family:system-ui,Segoe UI,Roboto,Arial;margin:20px}}
 
 
 def generate_clusters_html(clusters, sanitize=False):
-    parts = []
     sorted_c = sorted(clusters, key=lambda c: c.count, reverse=True)
+    parts = []
     for idx, c in enumerate(sorted_c, 1):
         age = (
             f"{(datetime.now() - c.last_ts).total_seconds():.0f}s"
@@ -289,6 +284,9 @@ class LogClusterer:
             if d < best_d:
                 best = c
                 best_d = d
+                # Early exit if we find a perfect or very close match
+                if d == 0:
+                    break
         if best is None or best_d > self.hamming_threshold:
             newc = Cluster(cleaned, ts, fp)
             self.clusters.append(newc)
